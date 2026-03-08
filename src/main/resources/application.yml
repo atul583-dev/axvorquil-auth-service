@@ -1,0 +1,41 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: axvorquil-auth-service
+
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/axvorquil_auth
+      # For MongoDB Atlas use:
+      # uri: mongodb+srv://<username>:<password>@cluster.mongodb.net/axvorquil_auth
+
+app:
+  jwt:
+    secret: axvorquil-super-secret-key-change-this-in-production-must-be-256-bits
+    access-token-expiry-ms: 900000       # 15 minutes
+    refresh-token-expiry-ms: 604800000   # 7 days
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+app:
+  base-url: ${APP_BASE_URL:http://localhost:8081}
+  mail:
+    from: noreply@axvorquil.com
+    from-name: Axvorquil
+
+logging:
+  level:
+    com.axvorquil: DEBUG
+    org.springframework.security: INFO

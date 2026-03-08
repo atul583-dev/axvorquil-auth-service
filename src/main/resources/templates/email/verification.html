@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Verify your email</title>
+  <style>
+    body { margin:0; padding:0; background:#f4f4f7; font-family:'Inter',Arial,sans-serif; }
+    .wrapper { max-width:600px; margin:40px auto; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.08); }
+    .header { background:#FC8019; padding:36px 40px; text-align:center; }
+    .header h1 { color:#fff; margin:0; font-size:1.8rem; font-weight:900; letter-spacing:-0.5px; }
+    .body { padding:40px; }
+    .body h2 { color:#1a1a2e; font-size:1.3rem; font-weight:800; margin-bottom:12px; }
+    .body p { color:#6b7280; font-size:0.95rem; line-height:1.7; margin-bottom:16px; }
+    .btn { display:inline-block; background:#FC8019; color:#fff !important; text-decoration:none;
+           padding:14px 32px; border-radius:10px; font-weight:700; font-size:1rem;
+           margin:20px 0; box-shadow:0 4px 16px rgba(252,128,25,0.35); }
+    .note { background:#fff3e8; border-left:4px solid #FC8019; padding:12px 16px;
+            border-radius:0 8px 8px 0; font-size:0.83rem; color:#6b7280; margin-top:24px; }
+    .footer { background:#f4f4f7; padding:24px 40px; text-align:center;
+              font-size:0.78rem; color:#9ca3af; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>Axvorquil</h1>
+    </div>
+    <div class="body">
+      <h2>Hi <span th:text="${firstName}">there</span>, verify your email</h2>
+      <p>Thanks for signing up! Click the button below to verify your email address and activate your account.</p>
+      <div style="text-align:center;">
+        <a th:href="${verificationUrl}" class="btn">Verify Email Address</a>
+      </div>
+      <p>Or copy and paste this link in your browser:</p>
+      <p style="word-break:break-all;font-size:0.8rem;color:#FC8019;" th:text="${verificationUrl}"></p>
+      <div class="note">
+        This link expires in <strong>24 hours</strong>. If you did not create an account, you can safely ignore this email.
+      </div>
+    </div>
+    <div class="footer">
+      &copy; 2025 Axvorquil &bull; Intelligent Security. Smarter Markets. Powerful Campaigns.
+    </div>
+  </div>
+</body>
+</html>

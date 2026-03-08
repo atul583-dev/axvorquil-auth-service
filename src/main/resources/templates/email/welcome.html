@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Welcome to Axvorquil</title>
+  <style>
+    body { margin:0; padding:0; background:#f4f4f7; font-family:'Inter',Arial,sans-serif; }
+    .wrapper { max-width:600px; margin:40px auto; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.08); }
+    .header { background:linear-gradient(135deg,#FC8019,#fca65e); padding:48px 40px; text-align:center; }
+    .header h1 { color:#fff; margin:0 0 8px; font-size:2rem; font-weight:900; letter-spacing:-0.5px; }
+    .header p { color:rgba(255,255,255,0.9); margin:0; font-size:0.95rem; }
+    .body { padding:40px; }
+    .body h2 { color:#1a1a2e; font-size:1.3rem; font-weight:800; margin-bottom:12px; }
+    .body p { color:#6b7280; font-size:0.95rem; line-height:1.7; margin-bottom:16px; }
+    .features { display:table; width:100%; margin:24px 0; }
+    .feature { display:table-row; }
+    .feat-icon { display:table-cell; font-size:1.4rem; padding:8px 12px 8px 0; vertical-align:top; }
+    .feat-text { display:table-cell; vertical-align:top; padding:6px 0; }
+    .feat-title { font-size:0.9rem; font-weight:700; color:#1a1a2e; }
+    .feat-desc  { font-size:0.82rem; color:#6b7280; }
+    .btn { display:inline-block; background:#FC8019; color:#fff !important; text-decoration:none;
+           padding:14px 32px; border-radius:10px; font-weight:700; font-size:1rem;
+           margin:20px 0; box-shadow:0 4px 16px rgba(252,128,25,0.35); }
+    .footer { background:#f4f4f7; padding:24px 40px; text-align:center; font-size:0.78rem; color:#9ca3af; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>Welcome to Axvorquil!</h1>
+      <p>Your account is verified and ready to go.</p>
+    </div>
+    <div class="body">
+      <h2>Hi <span th:text="${firstName}">there</span>, you're all set!</h2>
+      <p>Your Axvorquil account is now active. Here's what you can do right away:</p>
+      <div class="features">
+        <div class="feature">
+          <div class="feat-icon">🛡️</div>
+          <div class="feat-text">
+            <div class="feat-title">AI Security</div>
+            <div class="feat-desc">Monitor threats in real-time with 99.9% detection accuracy.</div>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feat-icon">📈</div>
+          <div class="feat-text">
+            <div class="feat-title">Stock Analysis</div>
+            <div class="feat-desc">Get AI-powered market signals before the crowd does.</div>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feat-icon">🚀</div>
+          <div class="feat-text">
+            <div class="feat-title">AI Campaigns</div>
+            <div class="feat-desc">Launch personalized campaigns that convert 3x better.</div>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center;">
+        <a th:href="${loginUrl}" class="btn">Go to Dashboard</a>
+      </div>
+    </div>
+    <div class="footer">
+      &copy; 2025 Axvorquil &bull; Intelligent Security. Smarter Markets. Powerful Campaigns.
+    </div>
+  </div>
+</body>
+</html>
