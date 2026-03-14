@@ -7,21 +7,13 @@ spring:
 
   data:
     mongodb:
-      uri: mongodb://localhost:27017/axvorquil_auth
-      # For MongoDB Atlas use:
-      # uri: mongodb+srv://<username>:<password>@cluster.mongodb.net/axvorquil_auth
-
-app:
-  jwt:
-    secret: axvorquil-super-secret-key-change-this-in-production-must-be-256-bits
-    access-token-expiry-ms: 900000       # 15 minutes
-    refresh-token-expiry-ms: 604800000   # 7 days
+      uri: mongodb+srv://atul583b:This583Works@cluster0.elwy7.mongodb.net/axvorquil_auth?appName=Cluster0
 
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
     properties:
       mail:
         smtp:
@@ -31,6 +23,10 @@ app:
 
 app:
   base-url: ${APP_BASE_URL:http://localhost:8081}
+  jwt:
+    secret: axvorquil-super-secret-key-change-this-in-production-must-be-256-bits
+    access-token-expiry-ms: 900000       # 15 minutes
+    refresh-token-expiry-ms: 604800000   # 7 days
   mail:
     from: noreply@axvorquil.com
     from-name: Axvorquil

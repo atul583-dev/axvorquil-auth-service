@@ -34,6 +34,10 @@ public class User {
     @Builder.Default
     private Set<String> roles = Set.of("ROLE_USER");
 
+    /** Clinic-level role: ADMIN | DOCTOR | RECEPTIONIST */
+    @Builder.Default
+    private String clinicRole = "RECEPTIONIST";
+
     @Builder.Default
     private boolean enabled = false;          // becomes true after email verification
 

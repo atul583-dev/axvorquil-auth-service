@@ -9,6 +9,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,12 +24,17 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
 
+        // Build authorities from Spring roles + clinicRole (e.g. ROLE_ADMIN)
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>(
+                user.getRoles().stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList()));
+        if (user.getClinicRole() != null) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getClinicRole()));
+        }
+
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getEmail())
                 .password(user.getPassword())
-                .authorities(user.getRoles().stream()
-                        .map(SimpleGrantedAuthority::new)
-                        .collect(Collectors.toList()))
+                .authorities(authorities)
                 .accountExpired(false)
                 .accountLocked(false)
                 .credentialsExpired(false)

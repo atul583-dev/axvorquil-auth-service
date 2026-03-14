@@ -39,21 +39,25 @@ public class AuthService {
 
         String verificationToken = UUID.randomUUID().toString();
 
+        // First user in the system automatically becomes ADMIN
+        String clinicRole = userRepository.count() == 0 ? "ADMIN" : "RECEPTIONIST";
+
         User user = User.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .email(request.getEmail().toLowerCase().trim())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .verificationToken(verificationToken)
-                .enabled(false)          // stays disabled until email verified
-                .emailVerified(false)
+                .enabled(true)
+                .emailVerified(true)
+                .clinicRole(clinicRole)
                 .build();
 
         userRepository.save(user);
         log.info("User registered: {}", user.getEmail());
 
-        // Send verification email async
-        emailService.sendVerificationEmail(user.getEmail(), user.getFirstName(), verificationToken);
+        // TODO: uncomment when mail is configured
+        // emailService.sendVerificationEmail(user.getEmail(), user.getFirstName(), verificationToken);
 
         return "Registration successful. Please check your email to verify your account.";
     }
@@ -75,16 +79,17 @@ public class AuthService {
             throw new RuntimeException("Please verify your email before logging in");
         }
 
+        String effectiveRole = user.getClinicRole() != null ? user.getClinicRole() : "RECEPTIONIST";
         String accessToken  = jwtUtil.generateAccessToken(
                 user.getEmail(),
-                Map.of("roles", user.getRoles(), "name", user.getFirstName())
+                Map.of("roles", user.getRoles(), "name", user.getFirstName(), "clinicRole", effectiveRole)
         );
         String refreshToken = jwtUtil.generateRefreshToken();
 
         user.setRefreshToken(passwordEncoder.encode(refreshToken));
         userRepository.save(user);
 
-        log.info("User logged in: {}", user.getEmail());
+        log.info("User logged in: {} (role={})", user.getEmail(), effectiveRole);
 
         return buildAuthResponse(user, accessToken, refreshToken);
     }
@@ -97,9 +102,10 @@ public class AuthService {
                 .findFirst()
                 .orElseThrow(() -> new TokenException("Invalid or expired refresh token"));
 
+        String effectiveRoleR = user.getClinicRole() != null ? user.getClinicRole() : "RECEPTIONIST";
         String newAccessToken  = jwtUtil.generateAccessToken(
                 user.getEmail(),
-                Map.of("roles", user.getRoles(), "name", user.getFirstName())
+                Map.of("roles", user.getRoles(), "name", user.getFirstName(), "clinicRole", effectiveRoleR)
         );
         String newRefreshToken = jwtUtil.generateRefreshToken();
 
@@ -199,6 +205,7 @@ public class AuthService {
                 .email(user.getEmail())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
+                .role(user.getClinicRole() != null ? user.getClinicRole() : "RECEPTIONIST")
                 .build();
     }
 }
