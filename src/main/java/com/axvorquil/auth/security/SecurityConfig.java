@@ -82,7 +82,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000", "https://axvorquil.com"));
+        config.setAllowedOrigins(List.of(
+            "http://localhost:3000",
+            "https://axvorquil.com",
+            "https://www.axvorquil.com",
+            "https://axvorquil-clinic-f3btfwhvckhvdqcx.canadacentral-01.azurewebsites.net",
+            System.getenv("ALLOWED_ORIGIN") != null ? System.getenv("ALLOWED_ORIGIN") : ""
+        ).stream().filter(s -> !s.isEmpty()).toList());
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
