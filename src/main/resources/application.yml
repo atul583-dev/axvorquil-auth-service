@@ -35,3 +35,7 @@ logging:
   level:
     com.axvorquil: DEBUG
     org.springframework.security: INFO
+
+security:
+  service:
+    url: "${SECURITY_SERVICE_URL:http://localhost:8085}"

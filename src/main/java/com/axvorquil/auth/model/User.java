@@ -49,6 +49,13 @@ public class User {
     private String passwordResetToken;         // for password reset
     private LocalDateTime passwordResetExpiry; // reset token expiry (15 min)
 
+    // ── Security / lockout fields ──────────────────────────────────
+    @Builder.Default
+    private int failedLoginAttempts = 0;
+    private LocalDateTime lockedUntil;   // null = not locked
+    private LocalDateTime lastLoginAt;
+    private String        lastLoginIp;
+
     @CreatedDate
     private LocalDateTime createdAt;
 

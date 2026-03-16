@@ -41,6 +41,7 @@ public class SecurityConfig {
             "/api/auth/resend-verification",
             "/api/auth/forgot-password",
             "/api/auth/reset-password",
+            "/api/auth/internal/**",
             "/actuator/health"
     };
 
@@ -82,13 +83,20 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(
+        java.util.List<String> origins = new java.util.ArrayList<>(List.of(
             "http://localhost:3000",
+            "http://localhost:5173",
+            "http://localhost:5174",
             "https://axvorquil.com",
             "https://www.axvorquil.com",
-            "https://axvorquil-clinic-f3btfwhvckhvdqcx.canadacentral-01.azurewebsites.net",
-            System.getenv("ALLOWED_ORIGIN") != null ? System.getenv("ALLOWED_ORIGIN") : ""
-        ).stream().filter(s -> !s.isEmpty()).toList());
+            "https://axvorquil-clinic-f3btfwhvckhvdqcx.canadacentral-01.azurewebsites.net"
+        ));
+        String extra = System.getenv("ALLOWED_ORIGIN");
+        if (extra != null && !extra.isBlank()) {
+            java.util.Arrays.stream(extra.split(","))
+                .map(String::trim).filter(s -> !s.isEmpty()).forEach(origins::add);
+        }
+        config.setAllowedOrigins(origins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

@@ -30,6 +30,7 @@ public class AuthService {
     private final JwtUtil               jwtUtil;
     private final AuthenticationManager authManager;
     private final EmailService          emailService;
+    private final AuditService          auditService;
 
     // ── REGISTER ──────────────────────────────────────────────────
     public String register(RegisterRequest request) {
@@ -55,6 +56,8 @@ public class AuthService {
 
         userRepository.save(user);
         log.info("User registered: {}", user.getEmail());
+        auditService.log(user.getId(), user.getEmail(), "REGISTER", null, null,
+                "New user registered with role " + clinicRole, "INFO");
 
         // TODO: uncomment when mail is configured
         // emailService.sendVerificationEmail(user.getEmail(), user.getFirstName(), verificationToken);
@@ -63,21 +66,34 @@ public class AuthService {
     }
 
     // ── LOGIN ─────────────────────────────────────────────────────
-    public AuthResponse login(LoginRequest request) {
+    public AuthResponse login(LoginRequest request, String ipAddress, String userAgent) {
+        User user = userRepository.findByEmail(request.getEmail().toLowerCase().trim())
+                .orElse(null);
+
+        // Check lockout before attempting authentication
+        if (user != null && auditService.isLocked(user)) {
+            throw new RuntimeException(auditService.lockoutMessage(user));
+        }
+
         try {
             authManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
             );
         } catch (AuthenticationException ex) {
+            // Record failed attempt if user exists
+            if (user != null) {
+                auditService.recordFailedLogin(user, ipAddress, userAgent);
+            }
             throw new RuntimeException("Invalid email or password");
         }
 
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (user == null) throw new RuntimeException("User not found");
 
         if (!user.isEmailVerified()) {
             throw new RuntimeException("Please verify your email before logging in");
         }
+
+        auditService.recordSuccessfulLogin(user, ipAddress, userAgent);
 
         String effectiveRole = user.getClinicRole() != null ? user.getClinicRole() : "RECEPTIONIST";
         String accessToken  = jwtUtil.generateAccessToken(
@@ -89,7 +105,7 @@ public class AuthService {
         user.setRefreshToken(passwordEncoder.encode(refreshToken));
         userRepository.save(user);
 
-        log.info("User logged in: {} (role={})", user.getEmail(), effectiveRole);
+        log.info("User logged in: {} role={} ip={}", user.getEmail(), effectiveRole, ipAddress);
 
         return buildAuthResponse(user, accessToken, refreshToken);
     }
@@ -120,6 +136,7 @@ public class AuthService {
         userRepository.findByEmail(email).ifPresent(user -> {
             user.setRefreshToken(null);
             userRepository.save(user);
+            auditService.log(user.getId(), email, "LOGOUT", null, null, null, "INFO");
             log.info("User logged out: {}", email);
         });
     }
@@ -153,6 +170,7 @@ public class AuthService {
             userRepository.save(user);
 
             emailService.sendPasswordResetEmail(user.getEmail(), user.getFirstName(), resetToken);
+            auditService.log(user.getId(), user.getEmail(), "PASSWORD_RESET_REQUEST", null, null, null, "WARNING");
             log.info("Password reset requested for: {}", email);
         });
 
@@ -175,6 +193,7 @@ public class AuthService {
         user.setRefreshToken(null);  // invalidate all existing sessions
         userRepository.save(user);
 
+        auditService.log(user.getId(), user.getEmail(), "PASSWORD_RESET_SUCCESS", null, null, null, "INFO");
         log.info("Password reset successful for: {}", user.getEmail());
         return "Password reset successful. You can now log in with your new password.";
     }

@@ -2,6 +2,7 @@ package com.axvorquil.auth.controller;
 
 import com.axvorquil.auth.dto.*;
 import com.axvorquil.auth.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -30,10 +31,21 @@ public class AuthController {
     // ── POST /api/auth/login ──────────────────────────────────────
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthResponse>> login(
-            @Valid @RequestBody LoginRequest request) {
+            @Valid @RequestBody LoginRequest request,
+            HttpServletRequest httpRequest) {
 
-        AuthResponse response = authService.login(request);
+        String ip        = resolveClientIp(httpRequest);
+        String userAgent = httpRequest.getHeader("User-Agent");
+        AuthResponse response = authService.login(request, ip, userAgent);
         return ResponseEntity.ok(ApiResponse.success("Login successful", response));
+    }
+
+    /** Resolves real client IP, accounting for reverse proxies. */
+    private String resolveClientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank())
+            return forwarded.split(",")[0].trim();
+        return request.getRemoteAddr();
     }
 
     // ── POST /api/auth/refresh ────────────────────────────────────
