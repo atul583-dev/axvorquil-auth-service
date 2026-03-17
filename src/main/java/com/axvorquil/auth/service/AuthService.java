@@ -5,7 +5,10 @@ import com.axvorquil.auth.dto.LoginRequest;
 import com.axvorquil.auth.dto.RegisterRequest;
 import com.axvorquil.auth.exception.TokenException;
 import com.axvorquil.auth.exception.UserAlreadyExistsException;
+import com.axvorquil.auth.model.ActiveSession;
 import com.axvorquil.auth.model.User;
+import com.axvorquil.auth.repository.ActiveSessionRepository;
+import com.axvorquil.auth.repository.RevokedTokenRepository;
 import com.axvorquil.auth.repository.UserRepository;
 import com.axvorquil.auth.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -25,12 +28,14 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final UserRepository        userRepository;
-    private final PasswordEncoder       passwordEncoder;
-    private final JwtUtil               jwtUtil;
-    private final AuthenticationManager authManager;
-    private final EmailService          emailService;
-    private final AuditService          auditService;
+    private final UserRepository          userRepository;
+    private final PasswordEncoder         passwordEncoder;
+    private final JwtUtil                 jwtUtil;
+    private final AuthenticationManager   authManager;
+    private final EmailService            emailService;
+    private final AuditService            auditService;
+    private final ActiveSessionRepository activeSessionRepository;
+    private final RevokedTokenRepository  revokedTokenRepository;
 
     // ── REGISTER ──────────────────────────────────────────────────
     public String register(RegisterRequest request) {
@@ -102,6 +107,21 @@ public class AuthService {
         );
         String refreshToken = jwtUtil.generateRefreshToken();
 
+        String jti = jwtUtil.extractJti(accessToken);
+        ActiveSession session = ActiveSession.builder()
+                .id(jti)
+                .userId(user.getId())
+                .userEmail(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .ipAddress(ipAddress)
+                .userAgent(userAgent != null ? userAgent : "Unknown")
+                .device(parseDevice(userAgent))
+                .browser(parseBrowser(userAgent))
+                .active(true)
+                .build();
+        activeSessionRepository.save(session);
+
         user.setRefreshToken(passwordEncoder.encode(refreshToken));
         userRepository.save(user);
 
@@ -134,6 +154,10 @@ public class AuthService {
     // ── LOGOUT ────────────────────────────────────────────────────
     public void logout(String email) {
         userRepository.findByEmail(email).ifPresent(user -> {
+            activeSessionRepository.findByUserIdAndActiveTrue(user.getId()).forEach(s -> {
+                s.setActive(false);
+                activeSessionRepository.save(s);
+            });
             user.setRefreshToken(null);
             userRepository.save(user);
             auditService.log(user.getId(), email, "LOGOUT", null, null, null, "INFO");
@@ -227,5 +251,21 @@ public class AuthService {
                 .lastName(user.getLastName())
                 .role(user.getClinicRole() != null ? user.getClinicRole() : "RECEPTIONIST")
                 .build();
+    }
+
+    private String parseDevice(String ua) {
+        if (ua == null) return "Unknown";
+        if (ua.contains("Mobile") || ua.contains("Android")) return "Mobile";
+        if (ua.contains("Tablet") || ua.contains("iPad")) return "Tablet";
+        return "Desktop";
+    }
+
+    private String parseBrowser(String ua) {
+        if (ua == null) return "Unknown";
+        if (ua.contains("Edg/")) return "Edge";
+        if (ua.contains("Chrome/")) return "Chrome";
+        if (ua.contains("Firefox/")) return "Firefox";
+        if (ua.contains("Safari/") && !ua.contains("Chrome")) return "Safari";
+        return "Browser";
     }
 }

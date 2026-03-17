@@ -1,5 +1,6 @@
 package com.axvorquil.auth.security;
 
+import com.axvorquil.auth.repository.RevokedTokenRepository;
 import com.axvorquil.auth.service.UserDetailsServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -22,6 +23,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsService;
+    private final RevokedTokenRepository revokedTokenRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -36,7 +38,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             if (email != null) {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-                if (jwtUtil.isTokenValid(token, email)) {
+                if (jwtUtil.isTokenValid(token, email)
+                        && !revokedTokenRepository.existsByJti(jwtUtil.extractJti(token))) {
                     UsernamePasswordAuthenticationToken authToken =
                             new UsernamePasswordAuthenticationToken(
                                     userDetails, null, userDetails.getAuthorities());

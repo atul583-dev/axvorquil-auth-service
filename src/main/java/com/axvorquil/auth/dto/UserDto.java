@@ -15,4 +15,8 @@ public class UserDto {
     private String clinicRole;
     private boolean enabled;
     private LocalDateTime createdAt;
+    private LocalDateTime lastLoginAt;
+    private String lastLoginIp;
+    private LocalDateTime lockedUntil;
+    private int failedLoginAttempts;
 }

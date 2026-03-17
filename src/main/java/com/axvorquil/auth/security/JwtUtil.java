@@ -35,10 +35,19 @@ public class JwtUtil {
         return Jwts.builder()
                 .claims(extraClaims)
                 .subject(email)
+                .id(UUID.randomUUID().toString())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + accessTokenExpiryMs))
                 .signWith(secretKey)
                 .compact();
+    }
+
+    public String extractJti(String token) {
+        return extractClaim(token, Claims::getId);
+    }
+
+    public Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
     }
 
     // ── Generate refresh token (random UUID stored in DB) ──────────
