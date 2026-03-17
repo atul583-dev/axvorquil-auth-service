@@ -18,6 +18,7 @@ public class AuthResponse {
     private String tokenType = "Bearer";
 
     private long expiresIn;      // in seconds
+    private String id;           // MongoDB user ObjectId — used by other services as X-User-Id
     private String email;
     private String firstName;
     private String lastName;
