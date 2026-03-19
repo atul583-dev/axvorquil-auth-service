@@ -33,6 +33,8 @@ public class HealthAggregatorService {
     private String campaignUrl;
     @Value("${services.stock.url:http://localhost:8084}")
     private String stockUrl;
+    @Value("${services.legal.url:http://localhost:8086}")
+    private String legalUrl;
 
     private record ServiceDef(String name, String url) {}
 
@@ -42,7 +44,8 @@ public class HealthAggregatorService {
             new ServiceDef("Security Service", securityUrl + "/actuator/health"),
             new ServiceDef("Clinic Service",   clinicUrl   + "/actuator/health"),
             new ServiceDef("Campaign Service", campaignUrl + "/actuator/health"),
-            new ServiceDef("Stock Service",    stockUrl    + "/actuator/health")
+            new ServiceDef("Stock Service",    stockUrl    + "/actuator/health"),
+            new ServiceDef("Legal AI Service", legalUrl    + "/actuator/health")
         );
 
         // Run all health checks in parallel — each has a 4s timeout so total ≤ ~5s
