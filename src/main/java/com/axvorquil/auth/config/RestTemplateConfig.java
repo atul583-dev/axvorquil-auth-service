@@ -11,8 +11,8 @@ public class RestTemplateConfig {
     @Bean
     public RestTemplate restTemplate() {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(2000);   // 2 seconds
-        factory.setReadTimeout(2000);      // 2 seconds
+        factory.setConnectTimeout(3000);   // 3 seconds
+        factory.setReadTimeout(5000);      // 5 seconds — actuator health checks include MongoDB
         RestTemplate restTemplate = new RestTemplate(factory);
         return restTemplate;
     }
