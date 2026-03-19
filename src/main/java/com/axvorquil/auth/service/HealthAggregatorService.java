@@ -13,6 +13,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
+import jakarta.annotation.PreDestroy;
 
 @Slf4j
 @Service
@@ -42,6 +43,12 @@ public class HealthAggregatorService {
     @Value("${services.vidya.url:http://localhost:8089}")
     private String vidyaUrl;
 
+    // Dedicated pool — guarantees true parallelism regardless of ForkJoinPool size on small VMs
+    private final ExecutorService healthPool = Executors.newFixedThreadPool(12);
+
+    @PreDestroy
+    public void shutdown() { healthPool.shutdownNow(); }
+
     private record ServiceDef(String name, String url) {}
 
     public SystemHealthDto aggregate() {
@@ -59,7 +66,7 @@ public class HealthAggregatorService {
 
         // Run all health checks in parallel — each has a 4s timeout so total ≤ ~5s
         List<CompletableFuture<ServiceHealthDto>> futures = services.stream()
-                .map(svc -> CompletableFuture.supplyAsync(() -> checkService(svc.name(), svc.url())))
+                .map(svc -> CompletableFuture.supplyAsync(() -> checkService(svc.name(), svc.url()), healthPool))
                 .collect(Collectors.toList());
 
         List<ServiceHealthDto> results = new ArrayList<>();
