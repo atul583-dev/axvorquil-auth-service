@@ -39,3 +39,30 @@ logging:
 security:
   service:
     url: "${SECURITY_SERVICE_URL:http://localhost:8085}"
+
+# ── Razorpay ──────────────────────────────────────────────────────────────
+razorpay:
+  key:
+    id:     "${RAZORPAY_KEY_ID:rzp_test_placeholder}"
+    secret: "${RAZORPAY_KEY_SECRET:placeholder_secret}"
+
+# ── Service URLs for health aggregator ───────────────────────────────────
+services:
+  auth:      { url: "${AUTH_SERVICE_URL:http://localhost:8081}" }
+  security:  { url: "${SECURITY_SERVICE_URL:http://localhost:8085}" }
+  clinic:    { url: "${CLINIC_SERVICE_URL:http://localhost:8082}" }
+  campaign:  { url: "${CAMPAIGN_SERVICE_URL:http://localhost:8083}" }
+  stock:     { url: "${STOCK_SERVICE_URL:http://localhost:8084}" }
+
+# ── Actuator ──────────────────────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+  health:
+    mail:
+      enabled: false
