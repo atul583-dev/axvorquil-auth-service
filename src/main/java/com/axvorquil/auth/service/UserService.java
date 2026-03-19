@@ -5,6 +5,8 @@ import com.axvorquil.auth.model.User;
 import com.axvorquil.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +23,7 @@ public class UserService {
     private final UserRepository  userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @Cacheable(value = "users", key = "#root.methodName")
     public List<UserDto> listAll() {
         return userRepository.findAll().stream()
                 .map(this::toDto)
@@ -33,6 +36,7 @@ public class UserService {
         return toDto(user);
     }
 
+    @CacheEvict(value = "users", allEntries = true)
     public UserDto updateRole(String id, String newRole) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found: " + id));
@@ -42,6 +46,7 @@ public class UserService {
         return toDto(saved);
     }
 
+    @CacheEvict(value = "users", allEntries = true)
     public UserDto toggleStatus(String id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found: " + id));
@@ -49,6 +54,7 @@ public class UserService {
         return toDto(userRepository.save(user));
     }
 
+    @CacheEvict(value = "users", allEntries = true)
     public void forcePasswordReset(String id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found: " + id));

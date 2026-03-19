@@ -8,6 +8,8 @@ import com.axvorquil.auth.repository.OrganizationRepository;
 import com.axvorquil.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -48,11 +50,13 @@ public class OrganizationService {
 
     // ── CRUD ──────────────────────────────────────────────────────────────────
 
+    @Cacheable(value = "orgData", key = "#id")
     public Organization getById(String id) {
         return orgRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Organization not found: " + id));
     }
 
+    @CacheEvict(value = "orgData", key = "#orgId")
     public Organization update(String orgId, OrgCreateRequest req) {
         Organization org = getById(orgId);
         org.setName(req.getName());
@@ -65,6 +69,7 @@ public class OrganizationService {
         return orgRepository.save(org);
     }
 
+    @Cacheable(value = "orgData", key = "#root.methodName")
     public List<Organization> listAll() {
         return orgRepository.findAllByOrderByCreatedAtDesc();
     }
@@ -77,6 +82,7 @@ public class OrganizationService {
                 .toList();
     }
 
+    @CacheEvict(value = {"orgData", "users"}, allEntries = true)
     public User inviteMember(String orgId, InviteMemberRequest req) {
         Organization org = getById(orgId);
 
@@ -107,6 +113,7 @@ public class OrganizationService {
         return member;
     }
 
+    @CacheEvict(value = {"orgData", "users"}, allEntries = true)
     public void removeMember(String orgId, String userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -122,6 +129,7 @@ public class OrganizationService {
 
     // ── Onboarding ────────────────────────────────────────────────────────────
 
+    @CacheEvict(value = "orgData", key = "#orgId")
     public Organization advanceOnboardingStep(String orgId, int step) {
         Organization org = getById(orgId);
         if (step > org.getOnboardingStep()) org.setOnboardingStep(step);
@@ -129,6 +137,7 @@ public class OrganizationService {
         return orgRepository.save(org);
     }
 
+    @CacheEvict(value = "orgData", key = "#orgId")
     public Organization updateModules(String orgId, boolean clinic, boolean campaigns,
             boolean stock, boolean security) {
         Organization org = getById(orgId);

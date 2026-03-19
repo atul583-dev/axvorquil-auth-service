@@ -10,6 +10,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -45,6 +47,7 @@ public class BillingService {
         "ENTERPRISE", new PlanInfo("ENTERPRISE",  "Enterprise", 799900,  50, new String[]{"50 seats", "All modules", "Custom integrations", "Dedicated support", "SLA"})
     );
 
+    @Cacheable(value = "billingPlans", key = "#root.methodName")
     public Collection<PlanInfo> getPlans() {
         return PLANS.values().stream()
                 .sorted(Comparator.comparingLong(PlanInfo::amountPaise))
@@ -104,6 +107,7 @@ public class BillingService {
 
     // ── Verify payment ────────────────────────────────────────────────────────
 
+    @CacheEvict(value = "orgData", key = "#orgId")
     public Organization verifyAndActivate(String orgId, BillingVerifyRequest req) {
         // Verify HMAC-SHA256 signature
         if (!req.getRazorpayOrderId().startsWith("order_mock_")) {
