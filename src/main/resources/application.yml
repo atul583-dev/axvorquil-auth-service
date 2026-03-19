@@ -55,7 +55,7 @@ services:
   stock:       { url: "${STOCK_SERVICE_URL:http://localhost:8084}" }
   legal:       { url: "${LEGAL_SERVICE_URL:https://axvorquil-legal-dqazb6aue5apehhg.canadacentral-01.azurewebsites.net}" }  # Azure deployed
   matchmaking: { url: "${MATCHMAKING_SERVICE_URL:https://axvorquil-matchmaking-ceehdehkbkftgjem.canadacentral-01.azurewebsites.net}" }  # Azure deployed
-  health:      { url: "${HEALTH_SERVICE_URL:http://localhost:8088}" }
+  health:      { url: "${HEALTH_SERVICE_URL:https://axvorquil-health-dwaagedjbeh2ehat.canadacentral-01.azurewebsites.net}" }  # Azure deployed
   vidya:       { url: "${VIDYA_SERVICE_URL:https://axvorquil-vidyaai-a5brgrfyeeefg2cc.canadacentral-01.azurewebsites.net}" }  # Azure deployed
 
 # ── Actuator ──────────────────────────────────────────────────────────────
