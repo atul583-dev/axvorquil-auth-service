@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -43,14 +45,24 @@ public class HealthAggregatorService {
             new ServiceDef("Stock Service",    stockUrl    + "/actuator/health")
         );
 
-        List<ServiceHealthDto> results = new ArrayList<>();
-        int upCount = 0;
+        // Run all health checks in parallel — each has a 4s timeout so total ≤ ~5s
+        List<CompletableFuture<ServiceHealthDto>> futures = services.stream()
+                .map(svc -> CompletableFuture.supplyAsync(() -> checkService(svc.name(), svc.url())))
+                .collect(Collectors.toList());
 
-        for (ServiceDef svc : services) {
-            ServiceHealthDto dto = checkService(svc.name(), svc.url());
-            results.add(dto);
-            if ("UP".equals(dto.getStatus())) upCount++;
+        List<ServiceHealthDto> results = new ArrayList<>();
+        for (int i = 0; i < futures.size(); i++) {
+            ServiceDef svc = services.get(i);
+            try {
+                results.add(futures.get(i).get(5, TimeUnit.SECONDS));
+            } catch (Exception e) {
+                results.add(ServiceHealthDto.builder()
+                        .name(svc.name()).url(svc.url())
+                        .status("DOWN").responseMs(5000L).details("Timeout").build());
+            }
         }
+
+        int upCount = (int) results.stream().filter(d -> "UP".equals(d.getStatus())).count();
 
         String overall = upCount == services.size() ? "UP"
                        : upCount == 0               ? "DOWN"
