@@ -23,4 +23,8 @@ public class AuthResponse {
     private String firstName;
     private String lastName;
     private String role;         // ADMIN | DOCTOR | RECEPTIONIST
+    private String orgId;        // Organization ID
+    private String orgName;      // Organization display name
+    private String plan;         // STARTER | PRO | ENTERPRISE
+    private boolean onboardingCompleted;
 }

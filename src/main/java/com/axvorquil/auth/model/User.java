@@ -49,6 +49,9 @@ public class User {
     private String passwordResetToken;         // for password reset
     private LocalDateTime passwordResetExpiry; // reset token expiry (15 min)
 
+    /** Multi-tenancy: the Organization this user belongs to */
+    private String orgId;
+
     // ── Security / lockout fields ──────────────────────────────────
     @Builder.Default
     private int failedLoginAttempts = 0;

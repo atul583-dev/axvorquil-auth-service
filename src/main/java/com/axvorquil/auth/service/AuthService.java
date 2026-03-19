@@ -6,8 +6,10 @@ import com.axvorquil.auth.dto.RegisterRequest;
 import com.axvorquil.auth.exception.TokenException;
 import com.axvorquil.auth.exception.UserAlreadyExistsException;
 import com.axvorquil.auth.model.ActiveSession;
+import com.axvorquil.auth.model.Organization;
 import com.axvorquil.auth.model.User;
 import com.axvorquil.auth.repository.ActiveSessionRepository;
+import com.axvorquil.auth.repository.OrganizationRepository;
 import com.axvorquil.auth.repository.RevokedTokenRepository;
 import com.axvorquil.auth.repository.UserRepository;
 import com.axvorquil.auth.security.JwtUtil;
@@ -20,8 +22,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -36,6 +38,7 @@ public class AuthService {
     private final AuditService            auditService;
     private final ActiveSessionRepository activeSessionRepository;
     private final RevokedTokenRepository  revokedTokenRepository;
+    private final OrganizationRepository  orgRepository;
 
     // ── REGISTER ──────────────────────────────────────────────────
     public String register(RegisterRequest request) {
@@ -45,8 +48,9 @@ public class AuthService {
 
         String verificationToken = UUID.randomUUID().toString();
 
-        // First user in the system automatically becomes ADMIN
-        String clinicRole = userRepository.count() == 0 ? "ADMIN" : "RECEPTIONIST";
+        // First user in the system automatically becomes ADMIN and creates an org
+        boolean isFirst = userRepository.count() == 0;
+        String clinicRole = isFirst ? "ADMIN" : "RECEPTIONIST";
 
         User user = User.builder()
                 .firstName(request.getFirstName())
@@ -60,6 +64,29 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
+
+        // Create a default Organization for the first user (tenant bootstrap)
+        if (isFirst) {
+            String orgName  = request.getFirstName() + "'s Organization";
+            String baseSlug = orgName.toLowerCase()
+                    .replaceAll("[^a-z0-9]+", "-").replaceAll("^-|-$", "");
+            String slug = baseSlug;
+            int s = 1;
+            while (orgRepository.existsBySlug(slug)) slug = baseSlug + "-" + s++;
+
+            Organization org = Organization.builder()
+                    .name(orgName).slug(slug).type("CLINIC")
+                    .plan("STARTER").status("TRIAL")
+                    .maxSeats(3).usedSeats(1)
+                    .billingEmail(request.getEmail())
+                    .adminIds(new ArrayList<>(List.of(user.getId())))
+                    .onboardingStep(1).onboardingCompleted(false)
+                    .build();
+            org = orgRepository.save(org);
+            user.setOrgId(org.getId());
+            userRepository.save(user);
+            log.info("Created organization '{}' for first user {}", orgName, user.getEmail());
+        }
         log.info("User registered: {}", user.getEmail());
         auditService.log(user.getId(), user.getEmail(), "REGISTER", null, null,
                 "New user registered with role " + clinicRole, "INFO");
@@ -101,10 +128,10 @@ public class AuthService {
         auditService.recordSuccessfulLogin(user, ipAddress, userAgent);
 
         String effectiveRole = user.getClinicRole() != null ? user.getClinicRole() : "RECEPTIONIST";
-        String accessToken  = jwtUtil.generateAccessToken(
-                user.getEmail(),
-                Map.of("roles", user.getRoles(), "name", user.getFirstName(), "clinicRole", effectiveRole)
-        );
+        Map<String, Object> claims = new HashMap<>(Map.of(
+                "roles", user.getRoles(), "name", user.getFirstName(), "clinicRole", effectiveRole));
+        if (user.getOrgId() != null) claims.put("orgId", user.getOrgId());
+        String accessToken  = jwtUtil.generateAccessToken(user.getEmail(), claims);
         String refreshToken = jwtUtil.generateRefreshToken();
 
         String jti = jwtUtil.extractJti(accessToken);
@@ -139,10 +166,10 @@ public class AuthService {
                 .orElseThrow(() -> new TokenException("Invalid or expired refresh token"));
 
         String effectiveRoleR = user.getClinicRole() != null ? user.getClinicRole() : "RECEPTIONIST";
-        String newAccessToken  = jwtUtil.generateAccessToken(
-                user.getEmail(),
-                Map.of("roles", user.getRoles(), "name", user.getFirstName(), "clinicRole", effectiveRoleR)
-        );
+        Map<String, Object> rClaims = new HashMap<>(Map.of(
+                "roles", user.getRoles(), "name", user.getFirstName(), "clinicRole", effectiveRoleR));
+        if (user.getOrgId() != null) rClaims.put("orgId", user.getOrgId());
+        String newAccessToken  = jwtUtil.generateAccessToken(user.getEmail(), rClaims);
         String newRefreshToken = jwtUtil.generateRefreshToken();
 
         user.setRefreshToken(passwordEncoder.encode(newRefreshToken));
@@ -241,6 +268,18 @@ public class AuthService {
 
     // ── Helper ────────────────────────────────────────────────────
     private AuthResponse buildAuthResponse(User user, String accessToken, String refreshToken) {
+        // Fetch org info for the response
+        String  orgName             = null;
+        String  plan                = "STARTER";
+        boolean onboardingCompleted = false;
+        if (user.getOrgId() != null) {
+            var org = orgRepository.findById(user.getOrgId()).orElse(null);
+            if (org != null) {
+                orgName             = org.getName();
+                plan                = org.getPlan();
+                onboardingCompleted = org.isOnboardingCompleted();
+            }
+        }
         return AuthResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
@@ -250,6 +289,10 @@ public class AuthService {
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .role(user.getClinicRole() != null ? user.getClinicRole() : "RECEPTIONIST")
+                .orgId(user.getOrgId())
+                .orgName(orgName)
+                .plan(plan)
+                .onboardingCompleted(onboardingCompleted)
                 .build();
     }
 

@@ -42,7 +42,10 @@ public class SecurityConfig {
             "/api/auth/forgot-password",
             "/api/auth/reset-password",
             "/api/auth/internal/**",
-            "/actuator/health"
+            "/api/billing/webhook",
+            "/api/billing/plans",
+            "/actuator/health",
+            "/actuator/info"
     };
 
     @Bean
