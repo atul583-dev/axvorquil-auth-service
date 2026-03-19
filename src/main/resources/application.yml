@@ -48,11 +48,15 @@ razorpay:
 
 # ── Service URLs for health aggregator ───────────────────────────────────
 services:
-  auth:      { url: "${AUTH_SERVICE_URL:http://localhost:8081}" }
-  security:  { url: "${SECURITY_SERVICE_URL:http://localhost:8085}" }
-  clinic:    { url: "${CLINIC_SERVICE_URL:http://localhost:8082}" }
-  campaign:  { url: "${CAMPAIGN_SERVICE_URL:http://localhost:8083}" }
-  stock:     { url: "${STOCK_SERVICE_URL:http://localhost:8084}" }
+  auth:        { url: "${AUTH_SERVICE_URL:http://localhost:8081}" }
+  security:    { url: "${SECURITY_SERVICE_URL:http://localhost:8085}" }
+  clinic:      { url: "${CLINIC_SERVICE_URL:http://localhost:8082}" }
+  campaign:    { url: "${CAMPAIGN_SERVICE_URL:http://localhost:8083}" }
+  stock:       { url: "${STOCK_SERVICE_URL:http://localhost:8084}" }
+  legal:       { url: "${LEGAL_SERVICE_URL:https://axvorquil-legal-dqazb6aue5apehhg.canadacentral-01.azurewebsites.net}" }  # Azure deployed
+  matchmaking: { url: "${MATCHMAKING_SERVICE_URL:https://axvorquil-matchmaking-ceehdehkbkftgjem.canadacentral-01.azurewebsites.net}" }  # Azure deployed
+  health:      { url: "${HEALTH_SERVICE_URL:http://localhost:8088}" }
+  vidya:       { url: "${VIDYA_SERVICE_URL:http://localhost:8089}" }
 
 # ── Actuator ──────────────────────────────────────────────────────────────
 management:
