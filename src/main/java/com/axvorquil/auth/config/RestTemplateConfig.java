@@ -11,8 +11,8 @@ public class RestTemplateConfig {
     @Bean
     public RestTemplate restTemplate() {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(3000);   // 3 seconds
-        factory.setReadTimeout(5000);      // 5 seconds — actuator health checks include MongoDB
+        factory.setConnectTimeout(5000);   // 5 seconds — Azure cold start can be slow
+        factory.setReadTimeout(10000);     // 10 seconds — Azure App Service cold starts take 6-10s
         RestTemplate restTemplate = new RestTemplate(factory);
         return restTemplate;
     }

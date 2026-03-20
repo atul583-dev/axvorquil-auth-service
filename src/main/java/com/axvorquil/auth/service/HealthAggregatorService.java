@@ -75,7 +75,7 @@ public class HealthAggregatorService {
         for (int i = 0; i < futures.size(); i++) {
             ServiceDef svc = services.get(i);
             try {
-                results.add(futures.get(i).get(6, TimeUnit.SECONDS));
+                results.add(futures.get(i).get(12, TimeUnit.SECONDS));
             } catch (Exception e) {
                 results.add(ServiceHealthDto.builder()
                         .name(svc.name()).url(svc.url())
