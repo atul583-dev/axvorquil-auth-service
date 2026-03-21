@@ -83,11 +83,14 @@ public class HealthAggregatorService {
             }
         }
 
-        int upCount = (int) results.stream().filter(d -> "UP".equals(d.getStatus())).count();
+        int upCount      = (int) results.stream().filter(d -> "UP".equals(d.getStatus())).count();
+        int warmingCount = (int) results.stream().filter(d -> "WARMING".equals(d.getStatus())).count();
 
-        String overall = upCount == services.size() ? "UP"
-                       : upCount == 0               ? "DOWN"
-                       :                              "DEGRADED";
+        // WARMING services (cold-starting) are excluded from the DOWN count
+        String overall = upCount == services.size()                  ? "UP"
+                       : upCount == 0 && warmingCount == 0           ? "DOWN"
+                       : upCount + warmingCount == services.size()   ? "DEGRADED"
+                       :                                               "DEGRADED";
 
         return SystemHealthDto.builder()
                 .overallStatus(overall)
@@ -115,12 +118,15 @@ public class HealthAggregatorService {
                     .build();
         } catch (Exception e) {
             long ms = System.currentTimeMillis() - start;
+            String msg = e.getMessage() != null ? e.getMessage() : "";
+            boolean isTimeout = msg.contains("timed out") || msg.contains("SocketTimeoutException")
+                             || msg.contains("Read timed out") || msg.contains("connect timed out");
             return ServiceHealthDto.builder()
                     .name(name)
                     .url(url)
-                    .status("DOWN")
+                    .status(isTimeout ? "WARMING" : "DOWN")
                     .responseMs(ms)
-                    .details(e.getMessage())
+                    .details(isTimeout ? "Cold starting — will be available shortly" : msg)
                     .build();
         }
     }
